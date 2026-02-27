@@ -19,11 +19,17 @@
 //!
 //! ## Backends
 //! Currently, this crate supports:
-//! * `wpa_supplicant` - use [`WpaWifi`](wpa_supplicant::WpaWifi) (Requires the daemon to be running, and premision to use it).
+//! * `wpa_supplicant` - use [`WpaWifi`](wpa_supplicant::WpaWifi) (Requires the daemon to be running, and permission to use it).
 //!
 //! Pull Requests are welcome!
 //!
 //! # Example
+//! 
+//! ```text
+//! [dependencies]
+//! wifilite = "0.1.0"
+//! tokio = { version = "1", features = ["full"] }
+//! ```
 //!
 //! ```no_run
 //! use wifilite::prelude::*;

@@ -15,16 +15,22 @@ To ensure you are using the right tool for the job, please note that `wifilite`:
   simple connectivity tasks, not for advanced packet manipulation.
 * is **not for Real-Time Updates**: This crate is designed for discrete, asynchronous
   operations rather than constant telemetry. It provides high-level methods to
-  [`get_available`](Wifi), [`connect`](Wifi), and [`disconnect`](Wifi); if you require a real-time stream
+  `get_available`, `connect`, and `disconnect`; if you require a real-time stream
   of signal fluctuations or millisecond-level state changes, this is not the right tool.
 
 ## Backends
 Currently, this crate supports:
-* `wpa_supplicant` - use [`WpaWifi`](wpa_supplicant::WpaWifi) (Requires the daemon to be running, and premision to use it).
+* `wpa_supplicant` - use `WpaWifi` (Requires the daemon to be running, and permission to use it).
 
 Pull Requests are welcome!
 
 # Example
+
+```toml
+[dependencies]
+wifilite = "0.1.0"
+tokio = { version = "1", features = ["full"] }
+```
 
 ```rust
 use wifilite::prelude::*;
