@@ -24,7 +24,7 @@
 //! Pull Requests are welcome!
 //!
 //! # Example
-//! 
+//!
 //! ```text
 //! [dependencies]
 //! wifilite = "0.1.0"
