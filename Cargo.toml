@@ -1,5 +1,10 @@
 [package]
 name = "wifilite"
+description = "Simple high-level Wi-Fi management and connectivity utilities"
+keywords = ["wifi"]
+authors = ["Ultraegern"]
+repository = "https://github.com/ultraegern/wifilite"
+license = "MIT OR Apache-2.0"
 version = "0.1.0"
 edition = "2024"
 
