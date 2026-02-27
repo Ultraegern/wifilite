@@ -26,7 +26,7 @@ Pull Requests are welcome!
 
 # Example
 
-```no_run
+```rust
 use wifilite::prelude::*;
 
 #[tokio::main]
