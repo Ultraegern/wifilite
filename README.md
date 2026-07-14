@@ -5,13 +5,13 @@
 This crate provides a simple high-level async interface for managing Wi-Fi connections on Linux.  
 Note that `wifilite` is just an ergonomic wrapper around the various backends.
 
+Feel free to submit feature requests, bug reports, and pull requests on [GitHub](https://github.com/ultraegern/wifilite/issues)
+
 ## Backends
 
 Currently, this crate supports:
 
-* `wpa_supplicant` - use `WpaWifi` (Requires the daemon to be running, and permission to use it).
-
-Pull Requests are welcome!
+* `wpa_supplicant` using `WpaWifi`
 
 ## Example
 
