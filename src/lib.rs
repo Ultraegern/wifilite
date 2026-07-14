@@ -63,9 +63,13 @@ pub mod error {
     /// management interface.
     #[derive(Debug, Error)]
     pub enum WifiError {
-        /// Internal error from the underlying Wi-Fi control library.
-        #[error("Wifi-Ctrl internal error: {0}")]
-        WifiCtrl(#[from] wifi_ctrl::error::Error),
+        /// Internal socket error from the wifi_ctrl library.
+        #[error("Wifi-Ctrl Socket internal error: {0}")]
+        WifiCtrlSocket(#[from] wifi_ctrl::error::SocketError),
+
+        /// Internal client error from the wifi_ctrl library.
+        #[error("Wifi-Ctrl Client error: {0}")]
+        WifiCtrlClient(#[from] wifi_ctrl::error::ClientError),
 
         /// Authentication failed with the specified credentials.
         #[error("Authentication failed for Network '{0}': {1}")]

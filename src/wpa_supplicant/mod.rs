@@ -31,7 +31,7 @@
 use tokio::spawn;
 use tokio::sync::broadcast;
 use tokio::time::{Duration, timeout};
-use wifi_ctrl::sta;
+use wifi_ctrl::sta::{self, Psk};
 
 use crate::error::{WifiError, WifiResult};
 use crate::{Wifi, WifiAuth, model::WifiNetwork};
@@ -93,7 +93,7 @@ impl WpaWifi {
     pub async fn new(interface: &str) -> WifiResult<Self> {
         let wpa_path = format!("/var/run/wpa_supplicant/{}", interface);
 
-        let mut setup = sta::WifiSetup::new()?;
+        let mut setup = sta::WifiSetup::new();
         setup.set_socket_path(wpa_path);
 
         let broadcast = setup.get_broadcast_receiver();
@@ -113,7 +113,7 @@ impl WpaWifi {
         })
     }
 
-    async fn runtime(runtime: sta::WifiStation) {
+    async fn runtime(mut runtime: sta::WifiStation) {
         if let Err(e) = runtime.run().await {
             eprintln!("WpaWifi::runtime: {e}");
         }
@@ -175,7 +175,9 @@ impl Wifi for WpaWifi {
         }
 
         if let Some(psk) = auth.psk() {
-            self.requester.set_network_psk(id, psk.into()).await?;
+            self.requester
+                .set_network_psk(id, Psk::passphrase(psk)?)
+                .await?;
         } else {
             self.requester
                 .set_network_keymgmt(id, sta::KeyMgmt::None)
