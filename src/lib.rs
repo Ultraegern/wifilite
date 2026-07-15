@@ -43,15 +43,17 @@
 //! }
 //! ```
 
-pub mod model;
-pub mod wpa_supplicant;
+#[cfg(not(any(feature = "wpa_supplicant")))]
+compile_error!("You must enable at least one wifi feature");
 
 pub mod prelude {
-    pub use crate::{
-        Wifi, WifiAuth, error::WifiError, error::WifiResult, model::WifiNetwork,
-        wpa_supplicant::WpaWifi,
-    };
+    #[cfg(feature = "wpa_supplicant")]
+    pub use crate::wpa_supplicant::WpaWifi;
+    pub use crate::{Wifi, WifiAuth, error::WifiError, error::WifiResult, model::WifiNetwork};
 }
+pub mod model;
+#[cfg(feature = "wpa_supplicant")]
+pub mod wpa_supplicant;
 
 /// Error types for Wi-Fi operations.
 pub mod error {
@@ -62,12 +64,15 @@ pub mod error {
     /// This enum represents all possible errors that can be returned when using the Wi-Fi
     /// management interface.
     #[derive(Debug, Error)]
+    #[non_exhaustive]
     pub enum WifiError {
         /// Internal socket error from the wifi_ctrl library.
+        #[cfg(feature = "wpa_supplicant")]
         #[error("Wifi-Ctrl Socket internal error: {0}")]
         WifiCtrlSocket(#[from] wifi_ctrl::error::SocketError),
 
         /// Internal client error from the wifi_ctrl library.
+        #[cfg(feature = "wpa_supplicant")]
         #[error("Wifi-Ctrl Client error: {0}")]
         WifiCtrlClient(#[from] wifi_ctrl::error::ClientError),
 

@@ -28,6 +28,7 @@
 //! }
 //! ```
 
+use std::collections::BTreeMap;
 use tokio::spawn;
 use tokio::sync::broadcast;
 use tokio::time::{Duration, timeout};
@@ -137,12 +138,41 @@ impl WpaWifi {
             }
         }
     }
+
+    /// Groups scan results by SSID, keeping the strongest signal for each network.
+    ///
+    /// Takes raw scan results and merges entries with the same SSID, updating
+    /// signal strength to reflect the strongest signal observed across all BSSIDs.
+    fn group_scan_results(scans: Vec<sta::ScanResult>) -> Vec<WifiNetwork> {
+        let mut grouped: BTreeMap<String, WifiNetwork> = BTreeMap::new();
+
+        for scan in scans {
+            let ssid = scan.name.clone();
+
+            if let Some(network) = grouped.get_mut(&ssid) {
+                // If the SSID exists, add this BSSID to the list
+                network.bssids_mut().push(scan.mac.clone());
+
+                // Update strength to show the strongest signal of the group
+                if let Some(current_strength) = network.strength()
+                    && (scan.signal as i32) > current_strength
+                {
+                    *network.strength_mut() = Some(scan.signal as i32);
+                }
+            } else {
+                // Otherwise, create a new entry using our From implementation
+                grouped.insert(ssid, WifiNetwork::from(scan));
+            }
+        }
+
+        grouped.into_values().collect()
+    }
 }
 
 impl Wifi for WpaWifi {
     async fn get_available(&self) -> WifiResult<Vec<WifiNetwork>> {
         let scan_results = self.requester.get_scan().await?;
-        let mut networks: Vec<WifiNetwork> = WifiNetwork::group_scan_results(scan_results.to_vec());
+        let mut networks: Vec<WifiNetwork> = WpaWifi::group_scan_results(scan_results.to_vec());
 
         if let Ok(status) = self.requester.get_status().await
             && let Some(active_bssid) = status.get("bssid")

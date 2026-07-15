@@ -14,6 +14,7 @@ use std::{
     net::{Ipv4Addr, Ipv6Addr},
     ops::Deref,
 };
+#[cfg(feature = "wpa_supplicant")]
 use wifi_ctrl::sta;
 
 /// Complete Wi-Fi status response containing network interfaces and available networks.
@@ -285,6 +286,7 @@ impl WifiBand {
     }
 }
 
+#[cfg(feature = "wpa_supplicant")]
 impl From<sta::ScanResult> for WifiNetwork {
     fn from(scan: sta::ScanResult) -> Self {
         Self {
@@ -502,89 +504,36 @@ impl WifiNetwork {
         }
     }
 
-    /// Groups scan results by SSID, keeping the strongest signal for each network.
-    ///
-    /// Takes raw scan results and merges entries with the same SSID, updating
-    /// signal strength to reflect the strongest signal observed across all BSSIDs.
-    ///
-    /// # Arguments
-    ///
-    /// * `scans` - Raw Wi-Fi scan results
-    ///
-    /// # Returns
-    ///
-    /// A deduplicated list of networks, one per unique SSID.
-    pub fn group_scan_results(scans: Vec<sta::ScanResult>) -> Vec<WifiNetwork> {
-        let mut grouped: BTreeMap<String, WifiNetwork> = BTreeMap::new();
-
-        for scan in scans {
-            let ssid = scan.name.clone();
-
-            if let Some(network) = grouped.get_mut(&ssid) {
-                // If the SSID exists, add this BSSID to the list
-                network.bssids.push(scan.mac.clone());
-
-                // Update strength to show the strongest signal of the group
-                if let Some(current_strength) = network.strength
-                    && (scan.signal as i32) > current_strength
-                {
-                    network.strength = Some(scan.signal as i32);
-                }
-            } else {
-                // Otherwise, create a new entry using our From implementation
-                grouped.insert(ssid, WifiNetwork::from(scan));
-            }
-        }
-
-        grouped.into_values().collect()
-    }
-
-    /// Returns the SSID (network name) if available.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use wifilite::model::{WifiNetwork, WifiStatus};
-    /// # use std::collections::BTreeSet;
-    /// let network = WifiNetwork::new(
-    ///     Some("MyNet".to_string()),
-    ///     vec![],
-    ///     WifiStatus::Disconnected,
-    ///     None,
-    ///     None,
-    ///     BTreeSet::new()
-    /// );
-    /// assert_eq!(network.ssid(), Some("MyNet"));
-    /// ```
+    /// Returns the SSID if available.
+    #[inline]
     pub fn ssid(&self) -> Option<&str> {
         self.ssid.as_deref()
     }
 
-    /// Returns an iterator over the BSSIDs (MAC addresses) for this network.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use wifilite::model::{WifiNetwork, WifiStatus};
-    /// # use std::collections::BTreeSet;
-    /// let network = WifiNetwork::new(
-    ///     Some("MyNet".to_string()),
-    ///     vec!["AA:BB:CC:DD:EE:FF".to_string()],
-    ///     WifiStatus::Disconnected,
-    ///     None,
-    ///     None,
-    ///     BTreeSet::new(),
-    /// );
-    /// assert_eq!(
-    ///     network.bssids().collect::<Vec<_>>(),
-    ///     vec!["AA:BB:CC:DD:EE:FF"])
-    /// ;
-    /// ```
-    pub fn bssids(&self) -> impl Iterator<Item = &str> {
+    /// Returns a Slice of BSSIDs associated with this network.
+    #[inline]
+    pub fn bssids(&self) -> &[String] {
+        &self.bssids
+    }
+
+    #[inline]
+    pub(crate) fn bssids_mut(&mut self) -> &mut Vec<String> {
+        &mut self.bssids
+    }
+
+    /// Returns an iterator over the BSSIDs associated with this network.
+    pub fn bssids_iter(&self) -> impl Iterator<Item = &str> {
         self.bssids.iter().map(|s| s.as_str())
     }
 
+    /// Checks if the given BSSID is associated with this network.
+    #[inline]
+    pub fn has_bssid(&self, bssid: &str) -> bool {
+        self.bssids.iter().any(|s| s == bssid)
+    }
+
     /// Returns the current connection state of this network.
+    #[inline]
     pub fn state(&self) -> WifiStatus {
         self.state
     }
@@ -592,24 +541,20 @@ impl WifiNetwork {
     /// Returns the signal strength in dBm if available.
     ///
     /// Higher values (closer to 0) indicate stronger signals.
+    #[inline]
     pub fn strength(&self) -> Option<i32> {
         self.strength
     }
 
-    /// Marks this network as connected.
-    ///
-    /// Used internally to update the network state after verifying a connection.
-    pub(crate) fn set_connected(&mut self) {
-        self.state = WifiStatus::Connected;
+    #[inline]
+    pub(crate) fn strength_mut(&mut self) -> &mut Option<i32> {
+        &mut self.strength
     }
 
-    /// Checks if the given BSSID is one of the access points for this network.
-    ///
-    /// # Arguments
-    ///
-    /// * `bssid` - The BSSID (MAC address) to check
-    pub fn has_bssid(&self, bssid: &str) -> bool {
-        self.bssids.contains(&bssid.to_string())
+    /// Marks this network as connected.
+    #[inline]
+    pub(crate) fn set_connected(&mut self) {
+        self.state = WifiStatus::Connected;
     }
 }
 
