@@ -336,6 +336,8 @@ mod tests {
 
         #[test]
         fn rejects_invalid_state() {
+            use crate::error::WifiError;
+
             let err = WifiStatus::try_from("nonsense").unwrap_err();
 
             match err {
@@ -425,7 +427,7 @@ mod tests {
         }
 
         #[test]
-        fn bssids_iterator() {
+        fn bssids() {
             let bssids_vec = vec![
                 "aa:bb:cc:dd:ee:ff".to_string(),
                 "11:22:33:44:55:66".to_string(),
@@ -439,7 +441,28 @@ mod tests {
                 BTreeSet::new(),
             );
 
-            let bssids: Vec<&str> = network.bssids().collect();
+            let bssids = network.bssids();
+            assert_eq!(bssids.len(), 2);
+            assert_eq!(bssids[0], "aa:bb:cc:dd:ee:ff");
+            assert_eq!(bssids[1], "11:22:33:44:55:66");
+        }
+
+        #[test]
+        fn bssids_iter() {
+            let bssids_vec = vec![
+                "aa:bb:cc:dd:ee:ff".to_string(),
+                "11:22:33:44:55:66".to_string(),
+            ];
+            let network = WifiNetwork::new(
+                Some("TestNet".to_string()),
+                bssids_vec.clone(),
+                WifiStatus::Disconnected,
+                Some(-50),
+                None,
+                BTreeSet::new(),
+            );
+
+            let bssids: Vec<&str> = network.bssids_iter().collect();
             assert_eq!(bssids.len(), 2);
             assert_eq!(bssids[0], "aa:bb:cc:dd:ee:ff");
             assert_eq!(bssids[1], "11:22:33:44:55:66");
